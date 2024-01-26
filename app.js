@@ -7,26 +7,30 @@
 // https://api.weatherapi.com/v1/current.json?key=6d210d800ff040bc960184527242301&q={city}
 // api რომელსაც გადავცემთ ქალაქს და გვიბრუნებს მიმდინარე ამინდის პროგნოზს.
 
-import fetch from "node-fetch";
-import { Command } from "commander";
-const program = new Command();
+// import fetch from "node-fetch";
+// import { Command } from "commander";
+// const weatherProgram = new Command();
 
-program
-  .command("fetch")
-  .description("Fetch data and display city weather temperature")
-  .argument("<city>", "search city temperature")
-  .option("--temperature", "display temperature")
-  .action((city, options) => {
-    fetch(
-      `https://api.weatherapi.com/v1/current.json?key=6d210d800ff040bc960184527242301&q=${city}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Tbilisi temperature:", data.current.temp_c, "°C");
-      });
-  });
+// weatherProgram
+//   .command("fetch")
+//   .description("Fetch data and display city weather temperature")
+//   .argument("<city>", "search city temperature")
+//   .option("--temperature", "display temperature")
+//   .action((city, options) => {
+//     fetch(
+//       `https://api.weatherapi.com/v1/current.json?key=6d210d800ff040bc960184527242301&q=${city}`
+//     )
+//       .then((res) => res.json())
+//       .then((data) => {
+//         console.log(
+//           `${data.location.name} temperature:`,
+//           data.current.temp_c,
+//           "°C"
+//         );
+//       });
+//   });
 
-program.parse();
+// weatherProgram.parse();
 
 // 2. დავწეროთ budget app cli პროგრამა,
 //  რომელიც დაამატებს, წაშლის ხარჯებს;
@@ -36,29 +40,26 @@ program.parse();
 import { Command } from "commander";
 import fs from "fs/promises";
 
-const weatherProgram = new Command();
+const program = new Command();
 
-weatherProgram
+program
   .command("add <cost>")
   .description("Add expenses")
-  .option("--temperature", "display temperature")
   .action((cost, options) => {
-    const expense = {
-      cost: cost,
-    };
-
     fs.readFile("./cost.json", "utf-8")
       .then((data) => {
         let expenses = [];
         if (data) {
           expenses = JSON.parse(data);
         }
+        const expense = {
+          cost: cost,
+          id: expenses.length + 1,
+        };
         expenses.push(expense);
 
         const jsonString = JSON.stringify(expenses, null, 2);
         fs.writeFile("./cost.json", jsonString);
-      })
-      .then(() => {
         console.log("Expense added:", expense);
       })
       .catch((error) => {
@@ -66,13 +67,30 @@ weatherProgram
       });
   });
 
-weatherProgram
-  .command("remove")
+program
+  .command("delete")
   .description("Add expenses")
-  .argument("<cost>", "cost")
-  .option("--temperature", "display temperature")
-  .action((cost, options) => {
-    console.log("remove cost:", cost);
+  .argument("<id>", "delete cost")
+  .action((id, options) => {
+    fs.readFile("./cost.json", "utf-8")
+      .then((data) => {
+        let expenses = [];
+        if (data) {
+          expenses = JSON.parse(data);
+        }
+        const expense = expenses.find((expense) => expense.id === parseInt(id));
+        if (expense) {
+          expenses = expenses.filter((expense) => expense.id !== parseInt(id));
+          const jsonString = JSON.stringify(expenses, null, 2);
+          fs.writeFile("./cost.json", jsonString);
+          console.log("Expense deleted:", expense);
+        } else {
+          console.log("Expense not found:", id);
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   });
 
-weatherProgram.parse();
+program.parse();
